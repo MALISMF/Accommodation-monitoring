@@ -170,8 +170,6 @@ def paginate_and_extract_all_hotels(page, hotels):
     Собирает все отели со всех страниц без удаления дубликатов
     и без дополнительного объединения информации.
     """
-    # TEMP: limit pagination to first 5 pages for debugging
-    max_page = 5
 
     while True:
         try:
@@ -183,9 +181,6 @@ def paginate_and_extract_all_hotels(page, hotels):
                 current_page = int(qs.get("page", ["1"])[0])
 
             next_page = current_page + 1
-            if next_page > max_page:
-                print(f"\nReached debug page limit ({max_page}). Stopping pagination.")
-                break
             print(f"\n--- Page {current_page} ---")
 
             # Проверяем наличие ссылки на next_page в пагинации
@@ -199,26 +194,12 @@ def paginate_and_extract_all_hotels(page, hotels):
             # Переходим на следующую страницу через параметр ?page=
             goto_page(page, next_page)
 
-            # Ретраи для загрузки карточек (scroll + wait)
-            cards_found = False
-            for attempt in range(3):
-                try:
-                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                    time.sleep(1)
-                    page.evaluate("window.scrollTo(0, 0)")
-                    time.sleep(0.5)
-
-                    page.wait_for_selector('a[data-testid="hotel-card-name"]', timeout=15000)
-                    cards_found = True
-                    break
-                except Exception as e:
-                    print(f"Attempt {attempt + 1} on page {next_page} failed: {e}")
-                    if attempt < 2:
-                        time.sleep(2)
-
-            if not cards_found:
-                print(f"Could not find hotel cards on page {next_page}. Stopping.")
-                break
+            # Единоразовая загрузка карточек (scroll + wait)
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            time.sleep(1)
+            page.evaluate("window.scrollTo(0, 0)")
+            time.sleep(0.5)
+            page.wait_for_selector('a[data-testid="hotel-card-name"]', timeout=15000)
 
             time.sleep(1.0)
 
