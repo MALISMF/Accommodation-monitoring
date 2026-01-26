@@ -26,13 +26,13 @@ class OstrovokHotelsParser:
             page.wait_for_selector('body', timeout=10000) # Ждем загрузки страницы
 
             # --- Закрываем попапы ---
-            self.close_popup(page)
+            self._close_popup(page)
 
             # Ждём появления карточек на первой странице
             page.wait_for_selector('a[data-testid="hotel-card-name"]', timeout=15000)
             time.sleep(2)
 
-            self.paginate_and_extract_all_hotels(page)
+            self._paginate_and_extract_all_hotels(page)
 
 
             # --- Сохраняем данные в CSV ---
@@ -66,7 +66,7 @@ class OstrovokHotelsParser:
         return self.all_hotels
             
 
-    def close_popup(self, page):
+    def _close_popup(self, page):
         try:
             btn = page.locator('button[aria-label*="close"]').first
             if btn.count() > 0 and btn.is_visible():
@@ -77,7 +77,7 @@ class OstrovokHotelsParser:
             return False
         return True
     
-    def get_hotel_cards(self, page):
+    def _get_hotel_cards(self, page):
         hotels = []
         try:
             page.wait_for_selector('a[data-testid="hotel-card-name"]', timeout=15000)
@@ -129,7 +129,7 @@ class OstrovokHotelsParser:
         
         return hotels
 
-    def goto_page(self, page, page_number):
+    def _goto_page(self, page, page_number):
         current_url = page.url
         parsed = urlparse(current_url)
         qs = parse_qs(parsed.query)
@@ -145,9 +145,9 @@ class OstrovokHotelsParser:
             print(f"Error navigating to page {page_number}: {e}")
             raise
 
-    def paginate_and_extract_all_hotels(self, page):
+    def _paginate_and_extract_all_hotels(self, page):
         # Собираем отели на первой странице
-        hotels = self.get_hotel_cards(page)
+        hotels = self._get_hotel_cards(page)
         if hotels:
             self.all_hotels.extend(hotels)
             print(f"Extracted {len(hotels)} hotels on page 1.")
@@ -172,8 +172,8 @@ class OstrovokHotelsParser:
                     break
                 
                 # Переходим на следующую страницу
-                self.goto_page(page, next_page)
-                self.close_popup(page)
+                self._goto_page(page, next_page)
+                self._close_popup(page)
                 
                 # Единоразовая загрузка карточек (scroll + wait)
                 page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
@@ -184,7 +184,7 @@ class OstrovokHotelsParser:
                 time.sleep(1.0)
                 
                 # Собираем отели на новой странице
-                hotels = self.get_hotel_cards(page)
+                hotels = self._get_hotel_cards(page)
                 
                 if len(hotels) == 0:
                     print(f"Warning: no hotels found on page {next_page}.")
